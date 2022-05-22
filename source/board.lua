@@ -5,8 +5,7 @@ local spriteSize = 32
 class( 'Board' ).extends(Object)
 
 function drawSprite( xPos, yPos )
-	local random = math.random(1, 4)
-	local newTile = Tile( random, xPos, yPos )
+	local newTile = Tile( xPos, yPos )
 
 	local x = xPos + (xPos * spriteSize)
 	local y = yPos + (yPos * spriteSize)
@@ -33,18 +32,30 @@ function Board:init( width, height )
 	self:draw()
 end
 
+function Board:clear()
+	for i = 1, self.width, 1 do
+		for j = 1, self.height, 1 do
+			self.matrix[i][j]:removeSprite()
+		end
+	end
+end
+
 function Board:compare( tile1, tile2, direction, count )
+	local isFirstInRow = count == 0
+
 	if (tile1.value == tile2.value) then
 		count += 1
+		
+		local oneMore = nil
 
 		if ( direction == 'row' and tile2.xCoordinate + 1 <= self.width ) then
-			local oneMore = self:compare(tile2, self.matrix[tile2.xCoordinate + 1][tile2.yCoordinate], 'row', count)
+			oneMore = self:compare(tile2, self.matrix[tile2.xCoordinate + 1][tile2.yCoordinate], 'row', count)
 			
 			if (oneMore) then
 				count += 1
 			end
 		elseif ( direction == 'column' and tile2.yCoordinate + 1 <= self.height ) then
-			local oneMore = self:compare(tile2, self.matrix[tile2.xCoordinate][tile2.yCoordinate + 1], 'column', count)
+			oneMore = self:compare(tile2, self.matrix[tile2.xCoordinate][tile2.yCoordinate + 1], 'column', count)
 			
 			if (oneMore) then
 				count += 1
@@ -63,16 +74,13 @@ function Board:compare( tile1, tile2, direction, count )
 				tile2:setImage(deathFrame2)
 			end
 			
-			local function deleteSprite()
-				tile1:removeSprite()
-				tile2:removeSprite()
-				-- 
-				-- tile1:reset()
-				-- tile2:reset()
+			local function clear()
+				self:clearMarkedTiles()
 			end
+			
 			-- applyDeathFrame()
 			playdate.timer.performAfterDelay(500, applyDeathFrame)
-			playdate.timer.performAfterDelay(1000, deleteSprite)
+			playdate.timer.performAfterDelay(1000, clear)
 		end
 		
 		return true
@@ -81,12 +89,16 @@ function Board:compare( tile1, tile2, direction, count )
 	end
 end
 
-function Board:clear()
+function Board:clearMarkedTiles()
 	for i = 1, self.width, 1 do
 		for j = 1, self.height, 1 do
-			-- print(self.matrix[i], i)
-			-- print(self.matrix[i][j], i, j)
-			self.matrix[i][j]:removeSprite()
+			local tile = self.matrix[i][j]
+			if (tile.marked) then
+				tile:removeSprite()
+
+				tile:reset()
+				tile:add()
+			end
 		end
 	end
 end

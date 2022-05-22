@@ -2,11 +2,9 @@ local gfx <const> = playdate.graphics
 
 class( 'Tile' ).extends( gfx.sprite )
 
-function Tile:init( value, xPos, yPos )
+function Tile:init( xPos, yPos )
 	Tile.super.init(self)
-	
-	self.marked = false
-	self.value = value
+	-- these are constant
 	self.xCoordinate = xPos
 	self.yCoordinate = yPos
 	
@@ -18,7 +16,13 @@ function Tile:init( value, xPos, yPos )
 	  [4] = gfx.imagetable.new("images/tile4"),
 	}
 
-	local tile = self.spriteTable[value]:getImage(1)
+	self:reset()
+end
+
+function Tile:reset()
+	self.marked = false
+	self.value = math.random(1, 4)
+	local tile = self.spriteTable[self.value]:getImage(1)
 	assert( tile ) -- make sure the image was where we thought
 	self:setImage(tile) -- new sprite from image
 end
