@@ -4,18 +4,6 @@ import 'tile'
 local spriteSize = 32
 class( 'Board' ).extends(Object)
 
-function drawSprite( xPos, yPos )
-	local newTile = Tile( xPos, yPos )
-
-	local x = xPos + (xPos * spriteSize)
-	local y = yPos + (yPos * spriteSize)
-
-	newTile:moveTo( x, y )
-	newTile:add() -- adds to display list
-	
-	return newTile
-end
-
 function Board:init( width, height )
 	Board.super.init(self)
 	--[[
@@ -25,8 +13,6 @@ function Board:init( width, height )
 	]]--
 	self.height = height
 	self.width = width
-	
-	-- setup map matrix
 	self.matrix = {}
 	
 	self:draw()
@@ -65,22 +51,10 @@ function Board:compare( tile1, tile2, direction, count )
 		if count >= 2 then
 			tile1.marked = true
 			tile2.marked = true
-			-- 
-			-- local deathFrame1 = tile1.spriteTable[tile1.value]:getImage(2)
-			-- local deathFrame2 = tile2.spriteTable[tile2.value]:getImage(2)
-			-- 
-			-- local function applyDeathFrame()
-			-- 	tile1:setImage(deathFrame1)
-			-- 	tile2:setImage(deathFrame2)
-			-- end
 			
 			local function clear()
 				self:clearMarkedTiles()
 			end
-			
-			-- applyDeathFrame()
-			-- playdate.timer.performAfterDelay(2000, applyDeathFrame)
-			-- playdate.timer.performAfterDelay(4000, clear)
 		end
 		
 		return true
@@ -98,9 +72,6 @@ function Board:clearMarkedTiles()
 				tile:removeSprite()
 				tile.checked = true
 				count += 1
-
-				-- tile:reset()
-				-- tile:add()
 			end
 		end
 	end
@@ -115,8 +86,6 @@ function Board:clearMarkedTiles()
 				end
 		end
 	end
-	
-	
 end
 
 function Board:draw()
@@ -170,7 +139,7 @@ function Board:pullDown(x, y, count)
 				self.matrix[x][y]:moveTo(xPos, yPos)
 			end
 			
-			playdate.timer.performAfterDelay(1000, move)
+			playdate.timer.performAfterDelay(250, move)
 			self:pullDown(x, y - 1, count)
 		end
 	end
