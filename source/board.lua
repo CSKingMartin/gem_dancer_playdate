@@ -27,23 +27,23 @@ function Board:clear()
 end
 
 function Board:compare( tile1, tile2, direction, count )
-	local isFirstInRow = count == 0
-
 	if (tile1.value == tile2.value) then
 		count += 1
 		
-		local oneMore = nil
+		local tileUpOneRowExists = nil
 
-		if ( direction == 'row' and tile2.xCoordinate + 1 <= self.width ) then
-			oneMore = self:compare(tile2, self.matrix[tile2.xCoordinate + 1][tile2.yCoordinate], 'row', count)
+		if ( direction == 'row' and tile2.xPos + 1 <= self.width ) then
+			tileUpOneRowExists = self:compare(
+				tile2, self.matrix[tile2.xPos + 1][tile2.yPos], 'row', count
+			)
 			
-			if (oneMore) then
+			if (tileUpOneRowExists) then
 				count += 1
 			end
-		elseif ( direction == 'column' and tile2.yCoordinate + 1 <= self.height ) then
-			oneMore = self:compare(tile2, self.matrix[tile2.xCoordinate][tile2.yCoordinate + 1], 'column', count)
+		elseif ( direction == 'column' and tile2.yPos + 1 <= self.height ) then
+			tileUpOneRowExists = self:compare(tile2, self.matrix[tile2.xPos][tile2.yPos + 1], 'column', count)
 			
-			if (oneMore) then
+			if (tileUpOneRowExists) then
 				count += 1
 			end
 		end
@@ -70,6 +70,7 @@ function Board:clearMarkedTiles()
 			local tile = self.matrix[i][j]
 			if (tile.marked and not tile.checked) then
 				tile:removeSprite()
+				tile.value = nil
 				tile.checked = true
 				count += 1
 			end
@@ -81,11 +82,12 @@ function Board:clearMarkedTiles()
 		for i = self.height, 1, -1 do
 			local tile = self.matrix[j][i]
 				if (tile.marked) then
-					print(j, i)
 					self:pullDown(j, i - 1, 1)
 				end
 		end
 	end
+	
+	-- self:fill()
 end
 
 function Board:draw()
@@ -119,34 +121,41 @@ function Board:draw()
 	playdate.timer.performAfterDelay(1000, clearTiles)
 end
 
+function Board:fill()
+	for i = 1, self.width, 1 do
+		for j = 1, self.height, 1 do
+			if (self.matrix[i][j].value == nil) then
+				print(i, j, self.matrix[i][j].value)
+				self.matrix[i][j]:reset()
+			end
+		end
+	end
+end
+
 function Board:pullDown(x, y, count)
 	if (y > 0) then
-		local target = self.matrix[x][y]
-		self.matrix[x][y + 1].value = target.value
-		self.matrix[x][y + 1].marked = false
+		local newTile = self.matrix[x][y] -- pulling down, making empty
+		local emptySpace = self.matrix[x][y + 1] -- spot to be filled
+		emptySpace.value = newTile.value
+		emptySpace.marked = false
+		newTile.value = nil
 
-		-- it is also empty
-		if (target.marked) then
-			print('found', x, y)
+		if (newTile.marked == true) then -- it is also empty
 			count += 1 	-- pull down upper tile one more space
 						-- or generate one more tile in event of hitting the ceiling
 			self:pullDown(x, y - 1, count)
 		else
 			local xPos = x + (x * spriteSize)
 			local yPos = (y + count) + ((y + count) * spriteSize)
-			print(xPos, yPos)
+		
 			local function move()
 				self.matrix[x][y]:moveTo(xPos, yPos)
 			end
 			
+			newTile.marked = true
 			playdate.timer.performAfterDelay(250, move)
+
 			self:pullDown(x, y - 1, count)
 		end
 	end
 end
-
-function Board:reDraw()
-	self:clear()
-	self:draw()
-end
-

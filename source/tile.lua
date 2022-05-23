@@ -6,9 +6,9 @@ class( 'Tile' ).extends( gfx.sprite )
 function Tile:init( xPos, yPos )
 	Tile.super.init(self)
 	-- these are constant
-	self.xCoordinate = xPos
-	self.yCoordinate = yPos
-	self.empty = true
+	self.xPos = xPos
+	self.yPos = yPos
+	self.marked = true
 	self.checked = false
 	
 	self.spriteTable =
@@ -33,11 +33,11 @@ function Tile:draw(x, y)
 end
 
 function Tile:reset()
+	print('yo')
 	self.marked = false
 	self.checked = false
 	self.value = math.random(1, 4)
 	local tile = self.spriteTable[self.value]:getImage(1)
 	assert( tile ) -- make sure the image was where we thought
 	self:setImage(tile) -- new sprite from image
-	self.empty = false
 end
