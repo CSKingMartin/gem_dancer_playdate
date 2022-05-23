@@ -65,22 +65,22 @@ function Board:compare( tile1, tile2, direction, count )
 		if count >= 2 then
 			tile1.marked = true
 			tile2.marked = true
-			
-			local deathFrame1 = tile1.spriteTable[tile1.value]:getImage(2)
-			local deathFrame2 = tile2.spriteTable[tile2.value]:getImage(2)
-			
-			local function applyDeathFrame()
-				tile1:setImage(deathFrame1)
-				tile2:setImage(deathFrame2)
-			end
+			-- 
+			-- local deathFrame1 = tile1.spriteTable[tile1.value]:getImage(2)
+			-- local deathFrame2 = tile2.spriteTable[tile2.value]:getImage(2)
+			-- 
+			-- local function applyDeathFrame()
+			-- 	tile1:setImage(deathFrame1)
+			-- 	tile2:setImage(deathFrame2)
+			-- end
 			
 			local function clear()
 				self:clearMarkedTiles()
 			end
 			
 			-- applyDeathFrame()
-			playdate.timer.performAfterDelay(500, applyDeathFrame)
-			playdate.timer.performAfterDelay(1000, clear)
+			-- playdate.timer.performAfterDelay(2000, applyDeathFrame)
+			-- playdate.timer.performAfterDelay(4000, clear)
 		end
 		
 		return true
@@ -90,24 +90,41 @@ function Board:compare( tile1, tile2, direction, count )
 end
 
 function Board:clearMarkedTiles()
-	for i = 1, self.width, 1 do
-		for j = 1, self.height, 1 do
+	local count = 0
+	for j = 1, self.height, 1 do
+		for i = 1, self.width, 1 do
 			local tile = self.matrix[i][j]
-			if (tile.marked) then
+			if (tile.marked and not tile.checked) then
 				tile:removeSprite()
+				tile.checked = true
+				count += 1
 
-				tile:reset()
-				tile:add()
+				-- tile:reset()
+				-- tile:add()
 			end
 		end
 	end
+	
+	-- backwards loop
+	for j = self.width, 1, -1 do
+		for i = self.height, 1, -1 do
+			local tile = self.matrix[j][i]
+				if (tile.marked) then
+					print(j, i)
+					self:pullDown(j, i - 1, 1)
+				end
+		end
+	end
+	
+	
 end
 
 function Board:draw()
 	for i = 1, self.width, 1 do
 		self.matrix[i] = {}
 		for j = 1, self.height, 1 do
-			self.matrix[i][j] = drawSprite(i, j)
+			self.matrix[i][j] = Tile( i, j )
+			self.matrix[i][j]:draw( i, j )
 		end
 	end
 	
@@ -115,7 +132,7 @@ function Board:draw()
 		for j = 1, self.height, 1 do
 			local initTile = self.matrix[i][j]
 			
-			-- i is width, j is height
+			-- i is column, j is row
 			if ( ( i + 1 ) < self.width ) then
 				self:compare(initTile, self.matrix[i + 1][j], 'row', 0 )
 			end
@@ -125,6 +142,38 @@ function Board:draw()
 			end
 		end
 	end
+	
+	local function clearTiles()
+		self:clearMarkedTiles()
+	end	
+
+	playdate.timer.performAfterDelay(1000, clearTiles)
+end
+
+function Board:pullDown(x, y, count)
+	if (y > 0) then
+		local target = self.matrix[x][y]
+		self.matrix[x][y + 1].value = target.value
+		self.matrix[x][y + 1].marked = false
+
+		-- it is also empty
+		if (target.marked) then
+			print('found', x, y)
+			count += 1 	-- pull down upper tile one more space
+						-- or generate one more tile in event of hitting the ceiling
+			self:pullDown(x, y - 1, count)
+		else
+			local xPos = x + (x * spriteSize)
+			local yPos = (y + count) + ((y + count) * spriteSize)
+			print(xPos, yPos)
+			local function move()
+				self.matrix[x][y]:moveTo(xPos, yPos)
+			end
+			
+			playdate.timer.performAfterDelay(1000, move)
+			self:pullDown(x, y - 1, count)
+		end
+	end
 end
 
 function Board:reDraw()
@@ -132,10 +181,3 @@ function Board:reDraw()
 	self:draw()
 end
 
-function Board:shiftTilesDown()
-	for i = 1, self.width, 1 do
-		for j = 1, self.height - 1, 1 do -- don't check last row
-			local moveDown = self.matrix[i][j + 1]
-		end
-	end
-end
